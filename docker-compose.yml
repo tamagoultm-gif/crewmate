@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: crewmate-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: crewmate
+      POSTGRES_PASSWORD: crewmate
+      POSTGRES_DB: crewmate
+    ports:
+      - "5433:5432"
+    volumes:
+      - crewmate_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U crewmate -d crewmate"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  crewmate_pgdata:

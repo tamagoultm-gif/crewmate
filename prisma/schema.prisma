@@ -1,0 +1,246 @@
+// Crewmate — creator community & talent marketplace
+// PostgreSQL + Prisma. Run: `npm run db:up && npm run db:push && npm run db:seed`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ----------------------------------------------------------------------------
+// Enums
+// ----------------------------------------------------------------------------
+
+enum Role {
+  ADMIN
+  EDITOR
+}
+
+enum RequestStatus {
+  NEW
+  CONTACTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum ContactStatus {
+  NEW
+  READ
+  REPLIED
+  ARCHIVED
+}
+
+enum PortfolioType {
+  IMAGE
+  VIDEO
+  REEL
+  STORY
+  CAMPAIGN
+}
+
+// ----------------------------------------------------------------------------
+// Auth / Admin
+// ----------------------------------------------------------------------------
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  image        String?
+  passwordHash String
+  role         Role     @default(EDITOR)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("admin_users")
+}
+
+// ----------------------------------------------------------------------------
+// Creators
+// ----------------------------------------------------------------------------
+
+model Creator {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  firstName   String
+  lastName    String
+  displayName String
+  profession  String
+  bio         String  @db.Text
+  headline    String? // short one-liner shown on cards
+
+  location String
+  city     String?
+  country  String?
+
+  avatarUrl String?
+  coverUrl  String?
+
+  email     String?
+  phone     String?
+  instagram String?
+  tiktok    String?
+  youtube   String?
+  website   String?
+
+  languages   String[] @default([])
+  skills      String[] @default([])
+  specialties String[] @default([])
+
+  // Cached aggregates — recomputed from reviews, editable by admin.
+  ratingAvg    Float @default(0)
+  reviewsCount Int   @default(0)
+
+  featured  Boolean @default(false)
+  active    Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  services  CreatorService[]
+  portfolio PortfolioItem[]
+  reviews   Review[]
+  requests  SelectedCreator[]
+
+  @@index([active, ratingAvg])
+  @@index([featured])
+  @@map("creators")
+}
+
+model Service {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  slug        String  @unique
+  description String?
+  icon        String? // lucide icon name
+  sortOrder   Int     @default(0)
+  active      Boolean @default(true)
+
+  creators CreatorService[]
+
+  @@map("services")
+}
+
+model CreatorService {
+  id        String  @id @default(cuid())
+  creatorId String
+  serviceId String
+  title     String? // e.g. "Instagram Reels", "Product Photography"
+  priceFrom Int?
+
+  creator Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([creatorId, serviceId])
+  @@map("creator_services")
+}
+
+model PortfolioItem {
+  id           String        @id @default(cuid())
+  creatorId    String
+  type         PortfolioType @default(IMAGE)
+  title        String
+  description  String?
+  mediaUrl     String
+  thumbnailUrl String?
+  category     String?
+  externalUrl  String?
+  sortOrder    Int           @default(0)
+  createdAt    DateTime      @default(now())
+
+  creator Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@index([creatorId, sortOrder])
+  @@map("creator_projects")
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  creatorId  String
+  authorName String
+  authorRole String?
+  rating     Int // 1..5
+  comment    String?  @db.Text
+  published  Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  creator Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@index([creatorId])
+  @@map("creator_ratings")
+}
+
+// ----------------------------------------------------------------------------
+// Client requests
+// ----------------------------------------------------------------------------
+
+model ProjectRequest {
+  id          String  @id @default(cuid())
+  firstName   String
+  lastName    String
+  company     String?
+  email       String
+  phone       String?
+
+  contentType   String?
+  description   String  @db.Text
+  budget        String?
+  preferredDate String?
+  preferredTime String?
+  location      String?
+  creatorsCount Int?
+
+  message String? @db.Text
+
+  status     RequestStatus @default(NEW)
+  adminNotes String?       @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  selectedCreators SelectedCreator[]
+
+  @@index([status, createdAt])
+  @@map("client_requests")
+}
+
+model SelectedCreator {
+  id        String @id @default(cuid())
+  requestId String
+  creatorId String
+
+  request ProjectRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  creator Creator        @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  @@unique([requestId, creatorId])
+  @@map("selected_creators")
+}
+
+model ContactMessage {
+  id        String        @id @default(cuid())
+  name      String
+  email     String
+  company   String?
+  phone     String?
+  subject   String?
+  message   String        @db.Text
+  status    ContactStatus @default(NEW)
+  createdAt DateTime      @default(now())
+
+  @@index([status, createdAt])
+  @@map("contacts")
+}
+
+model SiteSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+
+  @@map("site_settings")
+}

@@ -1,0 +1,108 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-display: "Inter", system-ui, sans-serif;
+
+  /* Light theme (default) — RGB channels for Tailwind alpha support */
+  --ink: 10 10 11;
+  --ink-soft: 24 24 27;
+  --ink-muted: 63 63 70;
+  --paper: 250 250 247;
+  --paper-soft: 244 244 239;
+  --paper-card: 255 255 255;
+  color-scheme: light;
+}
+
+.dark {
+  /* Dark theme — ink becomes light (text), paper becomes dark (backgrounds) */
+  --ink: 237 237 240;
+  --ink-soft: 212 212 216;
+  --ink-muted: 161 161 170;
+  --paper: 12 12 14;
+  --paper-soft: 24 24 27;
+  --paper-card: 30 30 34;
+  color-scheme: dark;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    @apply bg-paper text-ink;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  ::selection {
+    @apply bg-brand-600 text-white;
+  }
+}
+
+@layer components {
+  .container-page {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+  .eyebrow {
+    @apply inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-brand-600;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+  .btn-primary {
+    @apply btn bg-ink text-paper hover:bg-ink-soft hover:shadow-card-hover active:scale-[0.98];
+  }
+  .btn-accent {
+    @apply btn bg-brand-600 text-white hover:bg-brand-700 hover:shadow-glow active:scale-[0.98];
+  }
+  .btn-outline {
+    @apply btn border border-ink/15 bg-paper-card text-ink hover:border-ink/40 hover:bg-paper-soft;
+  }
+  .btn-ghost {
+    @apply btn text-ink/70 hover:bg-ink/5 hover:text-ink;
+  }
+  .card {
+    @apply rounded-3xl border border-ink/[0.06] bg-paper-card shadow-card;
+  }
+  .input {
+    @apply w-full rounded-2xl border border-ink/10 bg-paper-card px-4 py-3 text-sm text-ink placeholder:text-ink/40 transition focus:border-brand-500 focus:outline-none focus:ring-4 focus:ring-brand-500/10;
+  }
+  .label {
+    @apply mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink/60;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full bg-paper-soft px-3 py-1 text-xs font-medium text-ink/70;
+  }
+}
+
+/* Loading skeleton shimmer */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: #ececec;
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+  animation: shimmer 1.4s infinite;
+}
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Hide scrollbar for filter rows */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
