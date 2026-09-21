@@ -10,6 +10,8 @@ export const metadata: Metadata = {
     "Tell Crewmate about your project and we'll connect you with the right creators. Or send us a general message.",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function ContactPage() {
   const s = await getSettings();
 

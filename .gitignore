@@ -40,3 +40,7 @@ yarn-error.log*
 # local embedded db + logs
 /.pglite-data
 *.log
+
+# Windows duplicate copies
+* - Copie*
+* - Copy*
