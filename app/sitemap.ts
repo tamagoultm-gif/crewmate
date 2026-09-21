@@ -3,13 +3,19 @@ import { getAllCreatorSlugs } from "@/lib/data";
 
 const base = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
+// Generate on-demand, not at build (avoids any build-time DB dependency).
+export const dynamic = "force-dynamic";
+
+// Never let a slow/unreachable DB call block the build.
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
+  ]).catch(() => fallback);
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  let creators: { slug: string; updatedAt: Date }[] = [];
-  try {
-    creators = await getAllCreatorSlugs();
-  } catch {
-    creators = [];
-  }
+  const creators = await withTimeout(getAllCreatorSlugs(), 3000, []).catch(() => []);
 
   const staticRoutes = ["", "/about", "/community", "/contact"].map((path) => ({
     url: `${base}${path}`,
